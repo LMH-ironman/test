@@ -1,0 +1,308 @@
+2025-07-20 14:30:11 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 14:30:11 [WARN] bc is not installed. Installing...
+2025-07-20 14:30:14 [WARN] jq is not installed. Installing...
+2025-07-20 14:30:18 [INFO] Fetching XMR mining stats from API...
+2025-07-20 14:30:18 [DEBUG] Raw XMR JSON response: 2025-07-20 14:30:18 [INFO] Fetching XMR mining stats from API...
+{"hash":44233672,"identifier":"global","lastHash":1753021818,"totalHashes":192442107752368,"validShares":62473530,"invalidShares":35,"expiry":1753021848357,"amtPaid":180051673005037,"amtDue":102172208726,"txnCount":0}
+2025-07-20 14:30:18 [INFO] XMR解析结果 - paid: 180051673005037, due: 102172208726
+2025-07-20 14:30:18 [INFO] Parsed XMR balance - Paid: 180.051673005037 XMR, Due: 0.102172208726 XMR, Total: 180.153845213763 XMR
+2025-07-20 14:30:18 [INFO] XMR data processing completed successfully
+2025-07-20 14:30:18 [INFO] Fetching XTM mining stats from API...
+2025-07-20 14:30:18 [DEBUG] Raw XTM JSON response: 2025-07-20 14:30:18 [INFO] Fetching XTM mining stats from API...
+{
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "roundHashes": "1899200000000000",
+  "lastShare": "1750924037699",
+  "acceptedShares": "1488072",
+  "hashes": "148807200000000000",
+  "blocksFound": "4",
+  "lastBlockFound": "1750887502625",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 14:30:18 [INFO] XTM原始数据 - Paid: , Unlocked: , Locked: 
+2025-07-20 14:30:18 [ERROR] XTM数据格式无效
+2025-07-20 14:30:18 [ERROR] XTM data processing failed
+2025-07-20 14:30:18 [INFO] Sending alert to WeChat...
+2025-07-20 14:30:19 [INFO] WeChat alert sent successfully
+2025-07-20 14:30:19 [INFO] Mining balance monitor completed successfully
+2025-07-20 14:30:41 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 14:30:41 [INFO] Fetching XMR mining stats from API...
+2025-07-20 14:30:41 [DEBUG] Raw XMR JSON response: 2025-07-20 14:30:41 [INFO] Fetching XMR mining stats from API...
+{"hash":44425966,"identifier":"global","lastHash":1753021841,"totalHashes":192443227404478,"validShares":62473873,"invalidShares":35,"expiry":1753021871500,"amtPaid":180051673005037,"amtDue":102172208726,"txnCount":0}
+2025-07-20 14:30:41 [INFO] XMR解析结果 - paid: 180051673005037, due: 102172208726
+2025-07-20 14:30:41 [INFO] Parsed XMR balance - Paid: 180.051673005037 XMR, Due: 0.102172208726 XMR, Total: 180.153845213763 XMR
+2025-07-20 14:30:41 [INFO] XMR data processing completed successfully
+2025-07-20 14:30:41 [INFO] Fetching XTM mining stats from API...
+2025-07-20 14:30:41 [DEBUG] Raw XTM JSON response: 2025-07-20 14:30:41 [INFO] Fetching XTM mining stats from API...
+{
+  "hashes": "148807200000000000",
+  "blocksFound": "4",
+  "roundHashes": "1899200000000000",
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "acceptedShares": "1488072",
+  "lastBlockFound": "1750887502625",
+  "lastShare": "1750924037699",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 14:30:41 [INFO] XTM原始数据 - Paid: 41514104995, Unlocked: 121390720, Locked: 0
+2025-07-20 14:30:41 [INFO] Parsed XTM balance - Paid: 41514.104995 XTM, Unlocked: 121.390720 XTM, Locked: 0.000000 XTM, Total: 41635.495715 XTM
+2025-07-20 14:30:41 [INFO] XTM data processing completed successfully
+2025-07-20 14:30:42 [INFO] Sending alert to WeChat...
+2025-07-20 14:30:42 [INFO] WeChat alert sent successfully
+2025-07-20 14:30:42 [INFO] Mining balance monitor completed successfully
+2025-07-20 14:43:34 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 14:43:34 [INFO] Fetching XMR mining stats from API...
+2025-07-20 14:43:35 [DEBUG] Raw XMR JSON response: 2025-07-20 14:43:34 [INFO] Fetching XMR mining stats from API...
+{"hash":44767605,"identifier":"global","lastHash":1753022614,"totalHashes":192478056926788,"validShares":62484571,"invalidShares":35,"expiry":1753022645003,"amtPaid":180051673005037,"amtDue":144529358084,"txnCount":0}
+2025-07-20 14:43:35 [INFO] XMR解析结果 - paid: 180051673005037, due: 144529358084
+2025-07-20 14:43:35 [INFO] Parsed XMR balance - Paid: 180.051673005037 XMR, Due: 0.144529358084 XMR, Total: 180.196202363121 XMR
+2025-07-20 14:43:35 [INFO] XMR data processing completed successfully
+2025-07-20 14:43:35 [INFO] Fetching XTM mining stats from API...
+2025-07-20 14:43:35 [DEBUG] Raw XTM JSON response: 2025-07-20 14:43:35 [INFO] Fetching XTM mining stats from API...
+{
+  "acceptedShares": "1488072",
+  "lastShare": "1750924037699",
+  "hashes": "148807200000000000",
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "roundHashes": "1899200000000000",
+  "lastBlockFound": "1750887502625",
+  "blocksFound": "4",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 14:43:35 [INFO] XTM原始数据 - Paid: 41514104995, Unlocked: 121390720, Locked: 0
+2025-07-20 14:43:35 [INFO] Parsed XTM balance - Paid: 41514.104995 XTM, Unlocked: 121.390720 XTM, Locked: 0.000000 XTM, Total: 41635.495715 XTM
+2025-07-20 14:43:35 [INFO] XTM data processing completed successfully
+2025-07-20 14:43:35 [INFO] Fetching cryptocurrency prices...
+2025-07-20 14:43:35 [INFO] Fetching XMR price from XT exchange...
+2025-07-20 14:43:36 [INFO] XMR price: 327.40 USDT
+2025-07-20 14:43:36 [INFO] Fetching XTM price from XT exchange...
+2025-07-20 14:43:36 [INFO] XTM price: 0.007490 USDT
+2025-07-20 14:43:36 [INFO] Calculating USD values...
+2025-07-20 14:43:36 [INFO] XMR total value: 327.40 USD
+2025-07-20 14:43:36 [INFO] XTM total value: .007490 USD
+2025-07-20 14:43:36 [INFO] Total portfolio value: 327.407490 USD
+2025-07-20 14:43:36 [INFO] Sending alert to WeChat...
+2025-07-20 14:43:37 [INFO] WeChat alert sent successfully
+2025-07-20 14:43:37 [INFO] Mining balance monitor completed successfully
+2025-07-20 14:44:14 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 14:44:14 [INFO] Fetching XMR mining stats from API...
+2025-07-20 14:44:14 [DEBUG] Raw XMR JSON response: 2025-07-20 14:44:14 [INFO] Fetching XMR mining stats from API...
+{"hash":44912775,"identifier":"global","lastHash":1753022654,"totalHashes":192479895219448,"validShares":62485136,"invalidShares":35,"expiry":1753022684635,"amtPaid":180051673005037,"amtDue":144529358084,"txnCount":0}
+2025-07-20 14:44:14 [INFO] XMR解析结果 - paid: 180051673005037, due: 144529358084
+2025-07-20 14:44:14 [INFO] Parsed XMR balance - Paid: 180.051673005037 XMR, Due: 0.144529358084 XMR, Total: 180.196202363121 XMR
+2025-07-20 14:44:14 [INFO] XMR data processing completed successfully
+2025-07-20 14:44:14 [INFO] Fetching XTM mining stats from API...
+2025-07-20 14:44:15 [DEBUG] Raw XTM JSON response: 2025-07-20 14:44:14 [INFO] Fetching XTM mining stats from API...
+{
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "roundHashes": "1899200000000000",
+  "lastShare": "1750924037699",
+  "acceptedShares": "1488072",
+  "hashes": "148807200000000000",
+  "blocksFound": "4",
+  "lastBlockFound": "1750887502625",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 14:44:15 [INFO] XTM原始数据 - Paid: 41514104995, Unlocked: 121390720, Locked: 0
+2025-07-20 14:44:15 [INFO] Parsed XTM balance - Paid: 41514.104995 XTM, Unlocked: 121.390720 XTM, Locked: 0.000000 XTM, Total: 41635.495715 XTM
+2025-07-20 14:44:15 [INFO] XTM data processing completed successfully
+2025-07-20 14:44:15 [INFO] Fetching cryptocurrency prices...
+2025-07-20 14:44:15 [INFO] Fetching XMR price from XT exchange...
+2025-07-20 14:44:15 [INFO] XMR price: 327.33 USDT
+2025-07-20 14:44:15 [INFO] Fetching XTM price from XT exchange...
+2025-07-20 14:44:15 [INFO] XTM price: 0.007490 USDT
+2025-07-20 14:44:15 [INFO] Calculating USD values...
+2025-07-20 14:44:15 [INFO] XMR total value: 20250720144415327.33
+327.33 USD
+2025-07-20 14:44:15 [INFO] XTM total value: 202507201444150.007490
+.007490 USD
+2025-07-20 14:44:15 [INFO] Total portfolio value: 20250720144415327.33
+202507201444477.337490
+.007490 USD
+2025-07-20 14:44:16 [INFO] Sending alert to WeChat...
+2025-07-20 14:44:17 [INFO] WeChat alert sent successfully
+2025-07-20 14:44:17 [INFO] Mining balance monitor completed successfully
+2025-07-20 14:44:58 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 14:44:58 [INFO] Fetching XMR mining stats from API...
+2025-07-20 14:44:58 [DEBUG] Raw XMR JSON response: 2025-07-20 14:44:58 [INFO] Fetching XMR mining stats from API...
+{"hash":45179744,"identifier":"global","lastHash":1753022698,"totalHashes":192481947368533,"validShares":62485766,"invalidShares":35,"expiry":1753022728481,"amtPaid":180051673005037,"amtDue":158909590618,"txnCount":0}
+2025-07-20 14:44:58 [INFO] XMR解析结果 - paid: 180051673005037, due: 158909590618
+2025-07-20 14:44:58 [INFO] Parsed XMR balance - Paid: 180.051673005037 XMR, Due: 0.158909590618 XMR, Total: 180.210582595655 XMR
+2025-07-20 14:44:58 [INFO] XMR data processing completed successfully
+2025-07-20 14:44:58 [INFO] Fetching XTM mining stats from API...
+2025-07-20 14:44:59 [DEBUG] Raw XTM JSON response: 2025-07-20 14:44:58 [INFO] Fetching XTM mining stats from API...
+{
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "roundHashes": "1899200000000000",
+  "lastShare": "1750924037699",
+  "acceptedShares": "1488072",
+  "hashes": "148807200000000000",
+  "blocksFound": "4",
+  "lastBlockFound": "1750887502625",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 14:44:59 [INFO] XTM原始数据 - Paid: 41514104995, Unlocked: 121390720, Locked: 0
+2025-07-20 14:44:59 [INFO] Parsed XTM balance - Paid: 41514.104995 XTM, Unlocked: 121.390720 XTM, Locked: 0.000000 XTM, Total: 41635.495715 XTM
+2025-07-20 14:44:59 [INFO] XTM data processing completed successfully
+2025-07-20 14:44:59 [INFO] Fetching cryptocurrency prices...
+2025-07-20 14:44:59 [INFO] XMR price: 326.77 USDT
+2025-07-20 14:44:59 [INFO] XTM price: 0.007490 USDT
+2025-07-20 14:44:59 [INFO] Calculating USD values...
+2025-07-20 14:44:59 [INFO] XMR total value: 3649394075214582060.197800427184
+326.77 USD
+2025-07-20 14:44:59 [INFO] XTM total value: 8431487718002869066.781712
+.007490 USD
+2025-07-20 14:44:59 [INFO] Total portfolio value: 3649394075214582060.197800427184
+8431487718002869393.551712
+.007490 USD
+2025-07-20 14:44:59 [INFO] Sending alert to WeChat...
+2025-07-20 14:45:00 [INFO] WeChat alert sent successfully
+2025-07-20 14:45:00 [INFO] Mining balance monitor completed successfully
+2025-07-20 14:46:05 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 14:46:05 [INFO] Fetching XMR mining stats from API...
+2025-07-20 14:46:05 [DEBUG] Raw XMR JSON response: 2025-07-20 14:46:05 [INFO] Fetching XMR mining stats from API...
+{"hash":45208807,"identifier":"global","lastHash":1753022765,"totalHashes":192485112388183,"validShares":62486735,"invalidShares":35,"expiry":1753022795726,"amtPaid":180051673005037,"amtDue":158909590618,"txnCount":0}
+2025-07-20 14:46:05 [INFO] XMR解析结果 - paid: 180051673005037, due: 158909590618
+2025-07-20 14:46:05 [INFO] Parsed XMR balance - Paid: 180.051673005037 XMR, Due: 0.158909590618 XMR, Total: 180.210582595655 XMR
+2025-07-20 14:46:05 [INFO] XMR data processing completed successfully
+2025-07-20 14:46:05 [INFO] Fetching XTM mining stats from API...
+2025-07-20 14:46:06 [DEBUG] Raw XTM JSON response: 2025-07-20 14:46:05 [INFO] Fetching XTM mining stats from API...
+{
+  "acceptedShares": "1488072",
+  "lastShare": "1750924037699",
+  "hashes": "148807200000000000",
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "roundHashes": "1899200000000000",
+  "lastBlockFound": "1750887502625",
+  "blocksFound": "4",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 14:46:06 [INFO] XTM原始数据 - Paid: 41514104995, Unlocked: 121390720, Locked: 0
+2025-07-20 14:46:06 [INFO] Parsed XTM balance - Paid: 41514.104995 XTM, Unlocked: 121.390720 XTM, Locked: 0.000000 XTM, Total: 41635.495715 XTM
+2025-07-20 14:46:06 [INFO] XTM data processing completed successfully
+2025-07-20 14:46:06 [INFO] Fetching cryptocurrency prices...
+2025-07-20 14:46:06 [INFO] XMR price: 327.20 USDT
+2025-07-20 14:46:06 [INFO] XTM price: 0.007490 USDT
+2025-07-20 14:46:06 [INFO] Calculating USD values...
+2025-07-20 14:46:06 [INFO] XMR total value: 3649394075241073093.329912228316
+327.20 USD
+2025-07-20 14:46:06 [INFO] XTM total value: 8431487718064073245.482762
+.007490 USD
+2025-07-20 14:46:06 [INFO] Total portfolio value: 3649394075241073093.329912228316
+8431487718064073572.682762
+.007490 USD
+2025-07-20 14:46:07 [INFO] Sending alert to WeChat...
+2025-07-20 14:46:08 [INFO] WeChat alert sent successfully
+2025-07-20 14:46:08 [INFO] Mining balance monitor completed successfully
+2025-07-20 15:24:04 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 15:24:04 [INFO] Fetching XMR mining stats from API...
+2025-07-20 15:24:05 [DEBUG] Raw XMR JSON response: 2025-07-20 15:24:04 [INFO] Fetching XMR mining stats from API...
+{"hash":44548290,"identifier":"global","lastHash":1753025044,"totalHashes":192586690843858,"validShares":62520462,"invalidShares":35,"expiry":1753025074980,"amtPaid":180210089557473,"amtDue":42234315414,"txnCount":0}
+2025-07-20 15:24:05 [INFO] XMR解析结果 - paid: 180210089557473, due: 42234315414
+2025-07-20 15:24:05 [INFO] Parsed XMR balance - Paid: 180.210089557473 XMR, Due: 0.042234315414 XMR, Total: 180.252323872887 XMR
+2025-07-20 15:24:05 [INFO] XMR data processing completed successfully
+2025-07-20 15:24:05 [INFO] Fetching XTM mining stats from API...
+2025-07-20 15:24:05 [DEBUG] Raw XTM JSON response: 2025-07-20 15:24:05 [INFO] Fetching XTM mining stats from API...
+{
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "roundHashes": "1899200000000000",
+  "lastShare": "1750924037699",
+  "acceptedShares": "1488072",
+  "hashes": "148807200000000000",
+  "blocksFound": "4",
+  "lastBlockFound": "1750887502625",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 15:24:05 [INFO] XTM原始数据 - Paid: 41514104995, Unlocked: 121390720, Locked: 0
+2025-07-20 15:24:05 [INFO] Parsed XTM balance - Paid: 41514.104995 XTM, Unlocked: 121.390720 XTM, Locked: 0.000000 XTM, Total: 41635.495715 XTM
+2025-07-20 15:24:05 [INFO] XTM data processing completed successfully
+2025-07-20 15:24:05 [INFO] Fetching cryptocurrency prices...
+2025-07-20 15:24:05 [INFO] XMR price: 327.38 USDT
+2025-07-20 15:24:06 [INFO] XTM price: 0.007490 USDT
+2025-07-20 15:24:06 [INFO] Calculating USD values...
+2025-07-20 15:24:06 [INFO] XMR calculation: 180.252323872887 XMR * 327.38 USD = 59011.005789505746 USD
+2025-07-20 15:24:06 [INFO] XTM calculation: 41635.495715 XTM * 0.007490 USD = 311.849862 USD
+2025-07-20 15:24:06 [INFO] Total portfolio value: 59011.005789505746 + 311.849862 = 59322.855651505746 USD
+2025-07-20 15:24:06 [INFO] Sending alert to WeChat...
+2025-07-20 15:24:07 [INFO] WeChat alert sent successfully
+2025-07-20 15:24:07 [INFO] Mining balance monitor completed successfully
+2025-07-20 15:24:42 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 15:24:42 [INFO] Fetching XMR mining stats from API...
+2025-07-20 15:24:43 [DEBUG] Raw XMR JSON response: 2025-07-20 15:24:42 [INFO] Fetching XMR mining stats from API...
+{"hash":44442072,"identifier":"global","lastHash":1753025082,"totalHashes":192588292602793,"validShares":62520961,"invalidShares":35,"expiry":1753025113013,"amtPaid":180210089557473,"amtDue":59100617214,"txnCount":0}
+2025-07-20 15:24:43 [INFO] XMR解析结果 - paid: 180210089557473, due: 59100617214
+2025-07-20 15:24:43 [INFO] Parsed XMR balance - Paid: 180.210089557473 XMR, Due: 0.059100617214 XMR, Total: 180.269190174687 XMR
+2025-07-20 15:24:43 [INFO] XMR data processing completed successfully
+2025-07-20 15:24:43 [INFO] Fetching XTM mining stats from API...
+2025-07-20 15:24:43 [DEBUG] Raw XTM JSON response: 2025-07-20 15:24:43 [INFO] Fetching XTM mining stats from API...
+{
+  "acceptedShares": "1488072",
+  "lastShare": "1750924037699",
+  "hashes": "148807200000000000",
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "roundHashes": "1899200000000000",
+  "lastBlockFound": "1750887502625",
+  "blocksFound": "4",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 15:24:43 [INFO] XTM原始数据 - Paid: 41514104995, Unlocked: 121390720, Locked: 0
+2025-07-20 15:24:43 [INFO] Parsed XTM balance - Paid: 41514.104995 XTM, Unlocked: 121.390720 XTM, Locked: 0.000000 XTM, Total: 41635.495715 XTM
+2025-07-20 15:24:43 [INFO] XTM data processing completed successfully
+2025-07-20 15:24:43 [INFO] Fetching cryptocurrency prices...
+2025-07-20 15:24:43 [INFO] XMR price: 327.21 USDT
+2025-07-20 15:24:44 [INFO] XTM price: 0.007490 USDT
+2025-07-20 15:24:44 [INFO] Calculating USD values...
+2025-07-20 15:24:44 [INFO] XMR calculation: 180.269190174687 XMR * 327.21 USD = 58985.881717059333 USD
+2025-07-20 15:24:44 [INFO] XTM calculation: 41635.495715 XTM * 0.007490 USD = 311.849862 USD
+2025-07-20 15:24:44 [INFO] Total portfolio value: 58985.881717059333 + 311.849862 = 59297.731579059333 USD
+2025-07-20 15:24:44 [INFO] Sending alert to WeChat...
+2025-07-20 15:24:45 [INFO] WeChat alert sent successfully
+2025-07-20 15:24:45 [INFO] Mining balance monitor completed successfully
