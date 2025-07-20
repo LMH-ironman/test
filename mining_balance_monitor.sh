@@ -6,12 +6,24 @@
 
 set -euo pipefail
 
+# Store environment variables before loading config file
+_SAVED_LOG_FILE_PATH="$LOG_FILE_PATH"
+_SAVED_XMR_BALANCE_HISTORY_PATH="$XMR_BALANCE_HISTORY_PATH"
+_SAVED_XTM_BALANCE_HISTORY_PATH="$XTM_BALANCE_HISTORY_PATH"
+_SAVED_WECHAT_WEBHOOK_URL="$WECHAT_WEBHOOK_URL"
+
 # Load configuration from file if exists
 CONFIG_FILE="$(dirname "$0")/mining_config.env"
 if [[ -f "$CONFIG_FILE" ]]; then
     # shellcheck source=/dev/null
     source "$CONFIG_FILE"
 fi
+
+# Restore environment variables (environment variables take precedence)
+[[ -n "$_SAVED_LOG_FILE_PATH" ]] && LOG_FILE_PATH="$_SAVED_LOG_FILE_PATH"
+[[ -n "$_SAVED_XMR_BALANCE_HISTORY_PATH" ]] && XMR_BALANCE_HISTORY_PATH="$_SAVED_XMR_BALANCE_HISTORY_PATH"
+[[ -n "$_SAVED_XTM_BALANCE_HISTORY_PATH" ]] && XTM_BALANCE_HISTORY_PATH="$_SAVED_XTM_BALANCE_HISTORY_PATH"
+[[ -n "$_SAVED_WECHAT_WEBHOOK_URL" ]] && WECHAT_WEBHOOK_URL="$_SAVED_WECHAT_WEBHOOK_URL"
 
 # Configuration
 readonly XMR_API_URL="https://www.supportxmr.com/api/miner/45GkAa8FmTMWjeM1jCnH1r8psZWMBCi3vdmdrPqPCdDHRS4RZqb2Tnc55BqkUmuhd9KwvvhcoAVRqZMJVWe6wT3V32ZbN5W/stats"
@@ -59,7 +71,10 @@ export TOTAL_VALUE_USD=""
 log_message() {
     local level="$1"
     shift
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [$level] $*" | tee -a "$LOG_FILE"
+    local log_file="${LOG_FILE_PATH:-/tmp/mining_monitor.log}"
+    local message="$(date '+%Y-%m-%d %H:%M:%S') [$level] $*"
+    echo "$message"
+    echo "$message" >> "$log_file" 2>/dev/null || true
 }
 
 # Error handling function
@@ -226,7 +241,6 @@ fetch_xmr_price() {
         price="0"
     fi
 
-    log_message "INFO" "XMR price: $price USDT"
     echo "$price"
 }
 
@@ -263,7 +277,6 @@ fetch_xtm_price() {
         price="0"
     fi
 
-    log_message "INFO" "XTM price: $price USDT"
     echo "$price"
 }
 
@@ -374,9 +387,10 @@ parse_xmr_balance_data() {
     total_balance=$(convert_xmr_to_decimal "$total_raw")
 
     # Store current balance for growth calculation
+    local history_file="${XMR_BALANCE_HISTORY_PATH:-/root/MINING/xmr_balance_history.txt}"
     local previous_balance="0.000000000000"
-    if [[ -f "$XMR_BALANCE_HISTORY_FILE" ]]; then
-        previous_balance=$(tail -n 1 "$XMR_BALANCE_HISTORY_FILE" 2>/dev/null | awk '{print $NF}' || echo "0.000000000000")
+    if [[ -f "$history_file" ]]; then
+        previous_balance=$(tail -n 1 "$history_file" 2>/dev/null | awk '{print $NF}' || echo "0.000000000000")
         [[ -z "$previous_balance" ]] && previous_balance="0.000000000000"
     fi
 
@@ -392,8 +406,11 @@ parse_xmr_balance_data() {
     balance_growth=$(convert_xmr_to_decimal "$growth_int")
 
     # Save current balance to history
-    echo "$(date '+%Y-%m-%d %H:%M:%S') $total_balance" >> "$XMR_BALANCE_HISTORY_FILE"
-    tail -n 100 "$XMR_BALANCE_HISTORY_FILE" > "${XMR_BALANCE_HISTORY_FILE}.tmp" && mv "${XMR_BALANCE_HISTORY_FILE}.tmp" "$XMR_BALANCE_HISTORY_FILE"
+    mkdir -p "$(dirname "$history_file")" 2>/dev/null || true
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $total_balance" >> "$history_file" 2>/dev/null || true
+    if [[ -f "$history_file" ]]; then
+        tail -n 100 "$history_file" > "${history_file}.tmp" 2>/dev/null && mv "${history_file}.tmp" "$history_file" 2>/dev/null || true
+    fi
 
     # Export values
     export XMR_PAID_BALANCE="$paid_decimal"
@@ -458,9 +475,10 @@ parse_xtm_balance_data() {
     total_balance=$(echo "scale=6; $paid_decimal + $unlocked_decimal + $locked_decimal" | bc)
 
     # 获取上次收益
+    local history_file="${XTM_BALANCE_HISTORY_PATH:-/root/MINING/xtm_balance_history.txt}"
     local previous_balance="0.000000"
-    if [[ -f "$XTM_BALANCE_HISTORY_FILE" ]]; then
-        previous_balance=$(tail -n 1 "$XTM_BALANCE_HISTORY_FILE" 2>/dev/null | awk '{print $NF}' || echo "0.000000")
+    if [[ -f "$history_file" ]]; then
+        previous_balance=$(tail -n 1 "$history_file" 2>/dev/null | awk '{print $NF}' || echo "0.000000")
         [[ -z "$previous_balance" ]] && previous_balance="0.000000"
     fi
 
@@ -469,8 +487,11 @@ parse_xtm_balance_data() {
     balance_growth=$(echo "scale=6; $total_balance - $previous_balance" | bc)
 
     # Save current balance to history
-    echo "$(date '+%Y-%m-%d %H:%M:%S') $total_balance" >> "$XTM_BALANCE_HISTORY_FILE"
-    tail -n 100 "$XTM_BALANCE_HISTORY_FILE" > "${XTM_BALANCE_HISTORY_FILE}.tmp" && mv "${XTM_BALANCE_HISTORY_FILE}.tmp" "$XTM_BALANCE_HISTORY_FILE"
+    mkdir -p "$(dirname "$history_file")" 2>/dev/null || true
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $total_balance" >> "$history_file" 2>/dev/null || true
+    if [[ -f "$history_file" ]]; then
+        tail -n 100 "$history_file" > "${history_file}.tmp" 2>/dev/null && mv "${history_file}.tmp" "$history_file" 2>/dev/null || true
+    fi
 
     # Export values
     export XTM_PAID_BALANCE="$paid_decimal"
@@ -709,15 +730,19 @@ display_console_output() {
 
 # Main function
 main() {
+    # Create log directory if it doesn't exist
+    local log_file="${LOG_FILE_PATH:-/root/MINING/mining_balance_monitor.log}"
+    local xmr_history="${XMR_BALANCE_HISTORY_PATH:-/root/MINING/xmr_balance_history.txt}"
+    local xtm_history="${XTM_BALANCE_HISTORY_PATH:-/root/MINING/xtm_balance_history.txt}"
+    
+    mkdir -p "$(dirname "$log_file")" 2>/dev/null || true
+    mkdir -p "$(dirname "$xmr_history")" 2>/dev/null || true
+    mkdir -p "$(dirname "$xtm_history")" 2>/dev/null || true
+
     log_message "INFO" "Starting Mining Balance Monitor (XMR + XTM)..."
 
     # Check dependencies
     check_dependencies
-
-    # Create log directory if it doesn't exist
-    mkdir -p "$(dirname "$LOG_FILE")"
-    mkdir -p "$(dirname "$XMR_BALANCE_HISTORY_FILE")"
-    mkdir -p "$(dirname "$XTM_BALANCE_HISTORY_FILE")"
 
     # Initialize success flags
     local xmr_success=false
@@ -750,6 +775,10 @@ main() {
     log_message "INFO" "Fetching cryptocurrency prices..."
     XMR_PRICE=$(fetch_xmr_price)
     XTM_PRICE=$(fetch_xtm_price)
+    
+    # Debug price fetching results
+    log_message "DEBUG" "Fetched XMR_PRICE: '$XMR_PRICE'"
+    log_message "DEBUG" "Fetched XTM_PRICE: '$XTM_PRICE'"
     
     # Export price variables
     export XMR_PRICE
