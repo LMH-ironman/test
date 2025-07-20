@@ -18,6 +18,10 @@ readonly XMR_API_URL="https://www.supportxmr.com/api/miner/45GkAa8FmTMWjeM1jCnH1
 readonly XTM_WALLET_ADDRESS="16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY"
 readonly XTM_API_URL="https://api-tari.luckypool.io/stats_address?address=${XTM_WALLET_ADDRESS}"
 
+# Price API URLs
+readonly XMR_PRICE_API_URL="https://www.xt.com/sapi/v4/market/public/ticker/24h?symbol=xmr_usdt"
+readonly XTM_PRICE_API_URL="https://www.xt.com/sapi/v4/market/public/ticker/24h?symbol=xtm_usdt"
+
 # 微信机器人webhook地址 - 优先级：环境变量 > 配置文件 > 默认值
 readonly WECHAT_WEBHOOK_URL="${WECHAT_WEBHOOK_URL:-https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=3fc21e51-d7b7-46ca-9b86-f68deab4fd61}"
 readonly LOG_FILE="${LOG_FILE_PATH:-/root/MINING/mining_balance_monitor.log}"
@@ -43,6 +47,13 @@ export XTM_UNLOCKED_BALANCE=""
 export XTM_LOCKED_BALANCE=""
 export XTM_TOTAL_BALANCE=""
 export XTM_BALANCE_GROWTH=""
+
+# Global variables for price data
+export XMR_PRICE=""
+export XTM_PRICE=""
+export XMR_TOTAL_VALUE_USD=""
+export XTM_TOTAL_VALUE_USD=""
+export TOTAL_VALUE_USD=""
 
 # Logging function
 log_message() {
@@ -174,6 +185,120 @@ convert_xtm_to_decimal() {
 
     # 使用bc进行精确计算，去掉后6位相当于除以1000000
     echo "scale=6; $raw_value / 1000000" | bc
+}
+
+# Fetch XMR price from XT exchange
+fetch_xmr_price() {
+    local response
+    response=$(curl -s --connect-timeout 10 --max-time 30 "$XMR_PRICE_API_URL" 2>/dev/null) || {
+        log_message "ERROR" "Failed to fetch XMR price from API"
+        echo "0"
+        return
+    }
+
+    # Check if response is empty
+    if [[ -z "$response" ]]; then
+        log_message "WARN" "Empty response from XMR price API"
+        echo "0"
+        return
+    fi
+
+    # Extract price using jq
+    local price
+    price=$(echo "$response" | jq -r '.result[0].c // "0"' 2>/dev/null)
+    
+    # If jq fails, try regex extraction
+    if [[ "$price" == "null" || -z "$price" || "$price" == "0" ]]; then
+        price=$(echo "$response" | grep -o '"c":"[^"]*"' | sed 's/"c":"//g' | sed 's/"//g' | head -1)
+        [[ -z "$price" ]] && price="0"
+    fi
+
+    # Clean and validate price format
+    price=$(echo "$price" | sed 's/[^0-9.]//g')
+    if [[ ! "$price" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+        log_message "WARN" "Invalid XMR price format: $price"
+        price="0"
+    fi
+
+    log_message "INFO" "XMR price: $price USDT"
+    echo "$price"
+}
+
+# Fetch XTM price from XT exchange
+fetch_xtm_price() {
+    local response
+    response=$(curl -s --connect-timeout 10 --max-time 30 "$XTM_PRICE_API_URL" 2>/dev/null) || {
+        log_message "ERROR" "Failed to fetch XTM price from API"
+        echo "0"
+        return
+    }
+
+    # Check if response is empty
+    if [[ -z "$response" ]]; then
+        log_message "WARN" "Empty response from XTM price API"
+        echo "0"
+        return
+    fi
+
+    # Extract price using jq
+    local price
+    price=$(echo "$response" | jq -r '.result[0].c // "0"' 2>/dev/null)
+    
+    # If jq fails, try regex extraction
+    if [[ "$price" == "null" || -z "$price" || "$price" == "0" ]]; then
+        price=$(echo "$response" | grep -o '"c":"[^"]*"' | sed 's/"c":"//g' | sed 's/"//g' | head -1)
+        [[ -z "$price" ]] && price="0"
+    fi
+
+    # Clean and validate price format
+    price=$(echo "$price" | sed 's/[^0-9.]//g')
+    if [[ ! "$price" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+        log_message "WARN" "Invalid XTM price format: $price"
+        price="0"
+    fi
+
+    log_message "INFO" "XTM price: $price USDT"
+    echo "$price"
+}
+
+# Calculate USD values
+calculate_usd_values() {
+    log_message "INFO" "Calculating USD values..."
+
+    # Calculate XMR value in USD
+    if [[ -n "$XMR_TOTAL_BALANCE" && -n "$XMR_PRICE" && "$XMR_PRICE" != "0" ]]; then
+        # Clean the values before calculation
+        local clean_xmr_balance=$(echo "$XMR_TOTAL_BALANCE" | sed 's/[^0-9.]//g')
+        local clean_xmr_price=$(echo "$XMR_PRICE" | sed 's/[^0-9.]//g')
+        XMR_TOTAL_VALUE_USD=$(echo "scale=2; $clean_xmr_balance * $clean_xmr_price" | bc 2>/dev/null || echo "0.00")
+        log_message "INFO" "XMR total value: $XMR_TOTAL_VALUE_USD USD"
+    else
+        XMR_TOTAL_VALUE_USD="0.00"
+        log_message "WARN" "Cannot calculate XMR USD value - missing price or balance data"
+    fi
+
+    # Calculate XTM value in USD
+    if [[ -n "$XTM_TOTAL_BALANCE" && -n "$XTM_PRICE" && "$XTM_PRICE" != "0" ]]; then
+        # Clean the values before calculation
+        local clean_xtm_balance=$(echo "$XTM_TOTAL_BALANCE" | sed 's/[^0-9.]//g')
+        local clean_xtm_price=$(echo "$XTM_PRICE" | sed 's/[^0-9.]//g')
+        XTM_TOTAL_VALUE_USD=$(echo "scale=2; $clean_xtm_balance * $clean_xtm_price" | bc 2>/dev/null || echo "0.00")
+        log_message "INFO" "XTM total value: $XTM_TOTAL_VALUE_USD USD"
+    else
+        XTM_TOTAL_VALUE_USD="0.00"
+        log_message "WARN" "Cannot calculate XTM USD value - missing price or balance data"
+    fi
+
+    # Calculate total value in USD
+    local clean_xmr_value=$(echo "$XMR_TOTAL_VALUE_USD" | sed 's/[^0-9.]//g')
+    local clean_xtm_value=$(echo "$XTM_TOTAL_VALUE_USD" | sed 's/[^0-9.]//g')
+    TOTAL_VALUE_USD=$(echo "scale=2; $clean_xmr_value + $clean_xtm_value" | bc 2>/dev/null || echo "0.00")
+    log_message "INFO" "Total portfolio value: $TOTAL_VALUE_USD USD"
+
+    # Export values
+    export XMR_TOTAL_VALUE_USD
+    export XTM_TOTAL_VALUE_USD
+    export TOTAL_VALUE_USD
 }
 
 # Parse XMR balance data and calculate totals
@@ -418,6 +543,37 @@ generate_alert_message() {
         xtm_growth_indicator="➡️ "
     fi
 
+    # Format price and USD values
+    local xmr_price_formatted=""
+    local xtm_price_formatted=""
+    local xmr_value_formatted=""
+    local xtm_value_formatted=""
+    local total_value_formatted=""
+
+    if [[ -n "$XMR_PRICE" && "$XMR_PRICE" != "0" ]]; then
+        # Clean price format, ensure only numbers and decimal point
+        xmr_price_formatted=$(printf "%.2f" "$XMR_PRICE" 2>/dev/null || echo "获取失败")
+        xmr_value_formatted="$XMR_TOTAL_VALUE_USD"
+    else
+        xmr_price_formatted="获取失败"
+        xmr_value_formatted="计算失败"
+    fi
+
+    if [[ -n "$XTM_PRICE" && "$XTM_PRICE" != "0" ]]; then
+        # Clean price format, ensure only numbers and decimal point
+        xtm_price_formatted=$(printf "%.6f" "$XTM_PRICE" 2>/dev/null || echo "获取失败")
+        xtm_value_formatted="$XTM_TOTAL_VALUE_USD"
+    else
+        xtm_price_formatted="获取失败"
+        xtm_value_formatted="计算失败"
+    fi
+
+    if [[ -n "$TOTAL_VALUE_USD" ]]; then
+        total_value_formatted="$TOTAL_VALUE_USD"
+    else
+        total_value_formatted="计算失败"
+    fi
+
     cat << EOF
 💰 挖矿收益报告
 
@@ -426,6 +582,8 @@ generate_alert_message() {
 ⏳ 待支付：${xmr_due_formatted} XMR
 💎 总收益：${xmr_total_formatted} XMR
 📈 收益增长：${xmr_growth_indicator}${xmr_growth_formatted} XMR
+💵 当前价格：${xmr_price_formatted} USDT
+💲 总价值：${xmr_value_formatted} USD
 
 🔶 XTM 收益详情：
 💰 已付款：${xtm_paid_formatted} XTM
@@ -433,9 +591,14 @@ generate_alert_message() {
 🔒 已锁定：${xtm_locked_formatted} XTM
 💎 总收益：${xtm_total_formatted} XTM
 📈 收益增长：${xtm_growth_indicator}${xtm_growth_formatted} XTM
+💵 当前价格：${xtm_price_formatted} USDT
+💲 总价值：${xtm_value_formatted} USD
+
+🏦 投资组合总览：
+💲 总价值：${total_value_formatted} USD
 
 📅 更新时间：${current_time}
-🔗 数据来源：SupportXMR Pool & XTM LuckyPool
+🔗 数据来源：SupportXMR Pool & XTM LuckyPool & XT Exchange
 EOF
 }
 
@@ -528,6 +691,20 @@ main() {
         log_message "ERROR" "XTM data fetching failed"
     fi
 
+    # Fetch price data from XT exchange
+    log_message "INFO" "Fetching cryptocurrency prices..."
+    XMR_PRICE=$(fetch_xmr_price)
+    XTM_PRICE=$(fetch_xtm_price)
+    
+    # Export price variables
+    export XMR_PRICE
+    export XTM_PRICE
+
+    # Calculate USD values if we have balance data
+    if [[ "$xmr_success" == true ]] || [[ "$xtm_success" == true ]]; then
+        calculate_usd_values
+    fi
+
     # Only display output and send alerts if at least one currency succeeded
     if [[ "$xmr_success" == true ]] || [[ "$xtm_success" == true ]]; then
         # Display output
@@ -584,7 +761,7 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         -v|--version)
-            echo "Mining Balance Monitor v2.0.0"
+            echo "Mining Balance Monitor v2.1.0"
             exit 0
             ;;
         *)
