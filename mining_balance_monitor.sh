@@ -6,11 +6,11 @@
 
 set -euo pipefail
 
-# Store environment variables before loading config file
-_SAVED_LOG_FILE_PATH="$LOG_FILE_PATH"
-_SAVED_XMR_BALANCE_HISTORY_PATH="$XMR_BALANCE_HISTORY_PATH"
-_SAVED_XTM_BALANCE_HISTORY_PATH="$XTM_BALANCE_HISTORY_PATH"
-_SAVED_WECHAT_WEBHOOK_URL="$WECHAT_WEBHOOK_URL"
+# Store environment variables before loading config file (if they exist)
+_SAVED_LOG_FILE_PATH="${LOG_FILE_PATH:-}"
+_SAVED_XMR_BALANCE_HISTORY_PATH="${XMR_BALANCE_HISTORY_PATH:-}"
+_SAVED_XTM_BALANCE_HISTORY_PATH="${XTM_BALANCE_HISTORY_PATH:-}"
+_SAVED_WECHAT_WEBHOOK_URL="${WECHAT_WEBHOOK_URL:-}"
 
 # Load configuration from file if exists
 CONFIG_FILE="$(dirname "$0")/mining_config.env"
