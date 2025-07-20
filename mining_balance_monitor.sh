@@ -133,7 +133,7 @@ fetch_xtm_balance_data() {
     log_message "INFO" "Fetching XTM mining stats from API..."
 
     local response
-    response=$(curl -s --connect-timeout 10 --max-time 30 "$XTM_API_URL" 2>/dev/null) || {
+    response=$(curl -s --connect-timeout 15 --max-time 45 "$XTM_API_URL" 2>/dev/null) || {
         log_message "ERROR" "Failed to fetch XTM data from API"
         return 1
     }
@@ -144,11 +144,17 @@ fetch_xtm_balance_data() {
         return 1
     fi
 
+    # Check if response contains error
+    if [[ "$response" == *"error"* ]] || [[ "$response" == *"Error"* ]]; then
+        log_message "ERROR" "XTM API returned error: $response"
+        return 1
+    fi
+
     # Extract stats data
     local stats
     stats=$(echo "$response" | jq '.stats' 2>/dev/null)
     if [[ "$stats" == "null" ]] || [[ -z "$stats" ]]; then
-        log_message "ERROR" "Unable to get XTM stats data"
+        log_message "ERROR" "Unable to get XTM stats data from response: $response"
         return 1
     fi
 
@@ -267,11 +273,18 @@ calculate_usd_values() {
 
     # Calculate XMR value in USD
     if [[ -n "$XMR_TOTAL_BALANCE" && -n "$XMR_PRICE" && "$XMR_PRICE" != "0" ]]; then
-        # Clean the values before calculation
-        local clean_xmr_balance=$(echo "$XMR_TOTAL_BALANCE" | sed 's/[^0-9.]//g')
-        local clean_xmr_price=$(echo "$XMR_PRICE" | sed 's/[^0-9.]//g')
-        XMR_TOTAL_VALUE_USD=$(echo "scale=2; $clean_xmr_balance * $clean_xmr_price" | bc 2>/dev/null || echo "0.00")
-        log_message "INFO" "XMR total value: $XMR_TOTAL_VALUE_USD USD"
+        # Clean the values - extract only first valid number
+        local clean_xmr_balance=$(echo "$XMR_TOTAL_BALANCE" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+        local clean_xmr_price=$(echo "$XMR_PRICE" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+        
+        # Validate cleaned values
+        if [[ -n "$clean_xmr_balance" && -n "$clean_xmr_price" ]]; then
+            XMR_TOTAL_VALUE_USD=$(echo "scale=2; $clean_xmr_balance * $clean_xmr_price" | bc 2>/dev/null || echo "0.00")
+            log_message "INFO" "XMR calculation: $clean_xmr_balance XMR * $clean_xmr_price USD = $XMR_TOTAL_VALUE_USD USD"
+        else
+            XMR_TOTAL_VALUE_USD="0.00"
+            log_message "WARN" "XMR value cleaning failed - balance: '$clean_xmr_balance', price: '$clean_xmr_price'"
+        fi
     else
         XMR_TOTAL_VALUE_USD="0.00"
         log_message "WARN" "Cannot calculate XMR USD value - missing price or balance data"
@@ -279,21 +292,33 @@ calculate_usd_values() {
 
     # Calculate XTM value in USD
     if [[ -n "$XTM_TOTAL_BALANCE" && -n "$XTM_PRICE" && "$XTM_PRICE" != "0" ]]; then
-        # Clean the values before calculation
-        local clean_xtm_balance=$(echo "$XTM_TOTAL_BALANCE" | sed 's/[^0-9.]//g')
-        local clean_xtm_price=$(echo "$XTM_PRICE" | sed 's/[^0-9.]//g')
-        XTM_TOTAL_VALUE_USD=$(echo "scale=2; $clean_xtm_balance * $clean_xtm_price" | bc 2>/dev/null || echo "0.00")
-        log_message "INFO" "XTM total value: $XTM_TOTAL_VALUE_USD USD"
+        # Clean the values - extract only first valid number
+        local clean_xtm_balance=$(echo "$XTM_TOTAL_BALANCE" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+        local clean_xtm_price=$(echo "$XTM_PRICE" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+        
+        # Validate cleaned values
+        if [[ -n "$clean_xtm_balance" && -n "$clean_xtm_price" ]]; then
+            XTM_TOTAL_VALUE_USD=$(echo "scale=2; $clean_xtm_balance * $clean_xtm_price" | bc 2>/dev/null || echo "0.00")
+            log_message "INFO" "XTM calculation: $clean_xtm_balance XTM * $clean_xtm_price USD = $XTM_TOTAL_VALUE_USD USD"
+        else
+            XTM_TOTAL_VALUE_USD="0.00"
+            log_message "WARN" "XTM value cleaning failed - balance: '$clean_xtm_balance', price: '$clean_xtm_price'"
+        fi
     else
         XTM_TOTAL_VALUE_USD="0.00"
         log_message "WARN" "Cannot calculate XTM USD value - missing price or balance data"
     fi
 
     # Calculate total value in USD
-    local clean_xmr_value=$(echo "$XMR_TOTAL_VALUE_USD" | sed 's/[^0-9.]//g')
-    local clean_xtm_value=$(echo "$XTM_TOTAL_VALUE_USD" | sed 's/[^0-9.]//g')
+    local clean_xmr_value=$(echo "$XMR_TOTAL_VALUE_USD" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+    local clean_xtm_value=$(echo "$XTM_TOTAL_VALUE_USD" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+    
+    # Set defaults if cleaning failed
+    [[ -z "$clean_xmr_value" ]] && clean_xmr_value="0.00"
+    [[ -z "$clean_xtm_value" ]] && clean_xtm_value="0.00"
+    
     TOTAL_VALUE_USD=$(echo "scale=2; $clean_xmr_value + $clean_xtm_value" | bc 2>/dev/null || echo "0.00")
-    log_message "INFO" "Total portfolio value: $TOTAL_VALUE_USD USD"
+    log_message "INFO" "Total portfolio value: $clean_xmr_value + $clean_xtm_value = $TOTAL_VALUE_USD USD"
 
     # Export values
     export XMR_TOTAL_VALUE_USD
@@ -551,25 +576,55 @@ generate_alert_message() {
     local total_value_formatted=""
 
     if [[ -n "$XMR_PRICE" && "$XMR_PRICE" != "0" ]]; then
-        # Clean price format, ensure only numbers and decimal point
-        xmr_price_formatted=$(printf "%.2f" "$XMR_PRICE" 2>/dev/null || echo "获取失败")
-        xmr_value_formatted="$XMR_TOTAL_VALUE_USD"
+        # Extract only first valid number from price
+        local clean_price=$(echo "$XMR_PRICE" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+        if [[ -n "$clean_price" ]]; then
+            xmr_price_formatted=$(printf "%.2f" "$clean_price" 2>/dev/null || echo "获取失败")
+        else
+            xmr_price_formatted="获取失败"
+        fi
+        
+        # Clean USD value display
+        local clean_value=$(echo "$XMR_TOTAL_VALUE_USD" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+        if [[ -n "$clean_value" ]]; then
+            xmr_value_formatted=$(printf "%.2f" "$clean_value" 2>/dev/null || echo "计算失败")
+        else
+            xmr_value_formatted="计算失败"
+        fi
     else
         xmr_price_formatted="获取失败"
         xmr_value_formatted="计算失败"
     fi
 
     if [[ -n "$XTM_PRICE" && "$XTM_PRICE" != "0" ]]; then
-        # Clean price format, ensure only numbers and decimal point
-        xtm_price_formatted=$(printf "%.6f" "$XTM_PRICE" 2>/dev/null || echo "获取失败")
-        xtm_value_formatted="$XTM_TOTAL_VALUE_USD"
+        # Extract only first valid number from price
+        local clean_price=$(echo "$XTM_PRICE" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+        if [[ -n "$clean_price" ]]; then
+            xtm_price_formatted=$(printf "%.6f" "$clean_price" 2>/dev/null || echo "获取失败")
+        else
+            xtm_price_formatted="获取失败"
+        fi
+        
+        # Clean USD value display  
+        local clean_value=$(echo "$XTM_TOTAL_VALUE_USD" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+        if [[ -n "$clean_value" ]]; then
+            xtm_value_formatted=$(printf "%.2f" "$clean_value" 2>/dev/null || echo "计算失败")
+        else
+            xtm_value_formatted="计算失败"
+        fi
     else
         xtm_price_formatted="获取失败"
         xtm_value_formatted="计算失败"
     fi
 
     if [[ -n "$TOTAL_VALUE_USD" ]]; then
-        total_value_formatted="$TOTAL_VALUE_USD"
+        # Clean total USD value display
+        local clean_total=$(echo "$TOTAL_VALUE_USD" | grep -o '^[0-9]*\.[0-9]*' | head -1)
+        if [[ -n "$clean_total" ]]; then
+            total_value_formatted=$(printf "%.2f" "$clean_total" 2>/dev/null || echo "计算失败")
+        else
+            total_value_formatted="计算失败"
+        fi
     else
         total_value_formatted="计算失败"
     fi
