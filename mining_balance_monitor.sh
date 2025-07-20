@@ -261,14 +261,30 @@ parse_xtm_balance_data() {
 
     log_message "DEBUG" "Raw XTM JSON response: $json_data"
 
-    # 提取三个关键值
+    # 提取三个关键值 - 使用字符串模式避免数字精度问题
     local paid_raw
     local unlocked_raw
     local locked_raw
 
-    paid_raw=$(echo "$json_data" | jq -r '.paid // 0')
-    unlocked_raw=$(echo "$json_data" | jq -r '.unlocked // 0')
-    locked_raw=$(echo "$json_data" | jq -r '.locked // 0')
+    paid_raw=$(echo "$json_data" | jq -r '.paid // "0"' | sed 's/"//g')
+    unlocked_raw=$(echo "$json_data" | jq -r '.unlocked // "0"' | sed 's/"//g')
+    locked_raw=$(echo "$json_data" | jq -r '.locked // "0"' | sed 's/"//g')
+    
+    # 如果jq失败，使用正则表达式提取
+    if [[ "$paid_raw" == "null" || -z "$paid_raw" ]]; then
+        paid_raw=$(echo "$json_data" | grep -o '"paid":[^,}]*' | sed 's/"paid"://' | sed 's/[^0-9]//g')
+        [[ -z "$paid_raw" ]] && paid_raw="0"
+    fi
+    
+    if [[ "$unlocked_raw" == "null" || -z "$unlocked_raw" ]]; then
+        unlocked_raw=$(echo "$json_data" | grep -o '"unlocked":[^,}]*' | sed 's/"unlocked"://' | sed 's/[^0-9]//g')
+        [[ -z "$unlocked_raw" ]] && unlocked_raw="0"
+    fi
+    
+    if [[ "$locked_raw" == "null" || -z "$locked_raw" ]]; then
+        locked_raw=$(echo "$json_data" | grep -o '"locked":[^,}]*' | sed 's/"locked"://' | sed 's/[^0-9]//g')
+        [[ -z "$locked_raw" ]] && locked_raw="0"
+    fi
 
     log_message "INFO" "XTM原始数据 - Paid: $paid_raw, Unlocked: $unlocked_raw, Locked: $locked_raw"
 
@@ -341,10 +357,17 @@ generate_alert_message() {
     local xmr_total_formatted
     local xmr_growth_formatted
 
-    xmr_paid_formatted=$(format_balance "$XMR_PAID_BALANCE")
-    xmr_due_formatted=$(format_balance "$XMR_DUE_BALANCE")
-    xmr_total_formatted=$(format_balance "$XMR_TOTAL_BALANCE")
-    xmr_growth_formatted=$(format_balance "$XMR_BALANCE_GROWTH")
+    if [[ -n "$XMR_PAID_BALANCE" ]]; then
+        xmr_paid_formatted=$(format_balance "$XMR_PAID_BALANCE")
+        xmr_due_formatted=$(format_balance "$XMR_DUE_BALANCE")
+        xmr_total_formatted=$(format_balance "$XMR_TOTAL_BALANCE")
+        xmr_growth_formatted=$(format_balance "$XMR_BALANCE_GROWTH")
+    else
+        xmr_paid_formatted="数据获取失败"
+        xmr_due_formatted="数据获取失败"
+        xmr_total_formatted="数据获取失败"
+        xmr_growth_formatted="数据获取失败"
+    fi
 
     # Format XTM balances
     local xtm_paid_formatted
@@ -353,28 +376,44 @@ generate_alert_message() {
     local xtm_total_formatted
     local xtm_growth_formatted
 
-    xtm_paid_formatted=$(format_balance "$XTM_PAID_BALANCE")
-    xtm_unlocked_formatted=$(format_balance "$XTM_UNLOCKED_BALANCE")
-    xtm_locked_formatted=$(format_balance "$XTM_LOCKED_BALANCE")
-    xtm_total_formatted=$(format_balance "$XTM_TOTAL_BALANCE")
-    xtm_growth_formatted=$(format_balance "$XTM_BALANCE_GROWTH")
+    if [[ -n "$XTM_PAID_BALANCE" ]]; then
+        xtm_paid_formatted=$(format_balance "$XTM_PAID_BALANCE")
+        xtm_unlocked_formatted=$(format_balance "$XTM_UNLOCKED_BALANCE")
+        xtm_locked_formatted=$(format_balance "$XTM_LOCKED_BALANCE")
+        xtm_total_formatted=$(format_balance "$XTM_TOTAL_BALANCE")
+        xtm_growth_formatted=$(format_balance "$XTM_BALANCE_GROWTH")
+    else
+        xtm_paid_formatted="数据获取失败"
+        xtm_unlocked_formatted="数据获取失败"
+        xtm_locked_formatted="数据获取失败"
+        xtm_total_formatted="数据获取失败"
+        xtm_growth_formatted="数据获取失败"
+    fi
 
     # Determine XMR growth indicator
     local xmr_growth_indicator=""
-    if [[ "$XMR_GROWTH_INT" -gt 0 ]]; then
-        xmr_growth_indicator="📈 +"
-    elif [[ "$XMR_GROWTH_INT" -lt 0 ]]; then
-        xmr_growth_indicator="📉 "
+    if [[ -n "$XMR_GROWTH_INT" ]]; then
+        if [[ "$XMR_GROWTH_INT" -gt 0 ]]; then
+            xmr_growth_indicator="📈 +"
+        elif [[ "$XMR_GROWTH_INT" -lt 0 ]]; then
+            xmr_growth_indicator="📉 "
+        else
+            xmr_growth_indicator="➡️ "
+        fi
     else
         xmr_growth_indicator="➡️ "
     fi
 
     # Determine XTM growth indicator
     local xtm_growth_indicator=""
-    if (( $(echo "$XTM_BALANCE_GROWTH > 0" | bc -l) )); then
-        xtm_growth_indicator="📈 +"
-    elif (( $(echo "$XTM_BALANCE_GROWTH < 0" | bc -l) )); then
-        xtm_growth_indicator="📉 "
+    if [[ -n "$XTM_BALANCE_GROWTH" ]]; then
+        if (( $(echo "$XTM_BALANCE_GROWTH > 0" | bc -l) )); then
+            xtm_growth_indicator="📈 +"
+        elif (( $(echo "$XTM_BALANCE_GROWTH < 0" | bc -l) )); then
+            xtm_growth_indicator="📉 "
+        else
+            xtm_growth_indicator="➡️ "
+        fi
     else
         xtm_growth_indicator="➡️ "
     fi

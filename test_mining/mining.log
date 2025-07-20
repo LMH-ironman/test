@@ -1,0 +1,64 @@
+2025-07-20 14:30:11 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 14:30:11 [WARN] bc is not installed. Installing...
+2025-07-20 14:30:14 [WARN] jq is not installed. Installing...
+2025-07-20 14:30:18 [INFO] Fetching XMR mining stats from API...
+2025-07-20 14:30:18 [DEBUG] Raw XMR JSON response: 2025-07-20 14:30:18 [INFO] Fetching XMR mining stats from API...
+{"hash":44233672,"identifier":"global","lastHash":1753021818,"totalHashes":192442107752368,"validShares":62473530,"invalidShares":35,"expiry":1753021848357,"amtPaid":180051673005037,"amtDue":102172208726,"txnCount":0}
+2025-07-20 14:30:18 [INFO] XMR解析结果 - paid: 180051673005037, due: 102172208726
+2025-07-20 14:30:18 [INFO] Parsed XMR balance - Paid: 180.051673005037 XMR, Due: 0.102172208726 XMR, Total: 180.153845213763 XMR
+2025-07-20 14:30:18 [INFO] XMR data processing completed successfully
+2025-07-20 14:30:18 [INFO] Fetching XTM mining stats from API...
+2025-07-20 14:30:18 [DEBUG] Raw XTM JSON response: 2025-07-20 14:30:18 [INFO] Fetching XTM mining stats from API...
+{
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "roundHashes": "1899200000000000",
+  "lastShare": "1750924037699",
+  "acceptedShares": "1488072",
+  "hashes": "148807200000000000",
+  "blocksFound": "4",
+  "lastBlockFound": "1750887502625",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 14:30:18 [INFO] XTM原始数据 - Paid: , Unlocked: , Locked: 
+2025-07-20 14:30:18 [ERROR] XTM数据格式无效
+2025-07-20 14:30:18 [ERROR] XTM data processing failed
+2025-07-20 14:30:18 [INFO] Sending alert to WeChat...
+2025-07-20 14:30:19 [INFO] WeChat alert sent successfully
+2025-07-20 14:30:19 [INFO] Mining balance monitor completed successfully
+2025-07-20 14:30:41 [INFO] Starting Mining Balance Monitor (XMR + XTM)...
+2025-07-20 14:30:41 [INFO] Fetching XMR mining stats from API...
+2025-07-20 14:30:41 [DEBUG] Raw XMR JSON response: 2025-07-20 14:30:41 [INFO] Fetching XMR mining stats from API...
+{"hash":44425966,"identifier":"global","lastHash":1753021841,"totalHashes":192443227404478,"validShares":62473873,"invalidShares":35,"expiry":1753021871500,"amtPaid":180051673005037,"amtDue":102172208726,"txnCount":0}
+2025-07-20 14:30:41 [INFO] XMR解析结果 - paid: 180051673005037, due: 102172208726
+2025-07-20 14:30:41 [INFO] Parsed XMR balance - Paid: 180.051673005037 XMR, Due: 0.102172208726 XMR, Total: 180.153845213763 XMR
+2025-07-20 14:30:41 [INFO] XMR data processing completed successfully
+2025-07-20 14:30:41 [INFO] Fetching XTM mining stats from API...
+2025-07-20 14:30:41 [DEBUG] Raw XTM JSON response: 2025-07-20 14:30:41 [INFO] Fetching XTM mining stats from API...
+{
+  "hashes": "148807200000000000",
+  "blocksFound": "4",
+  "roundHashes": "1899200000000000",
+  "wallet": "16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY",
+  "acceptedShares": "1488072",
+  "lastBlockFound": "1750887502625",
+  "lastShare": "1750924037699",
+  "hashrate": 0,
+  "email": null,
+  "paid": 41514104995,
+  "paymentEnabled": true,
+  "paymentThreshold": "300000000",
+  "unlocked": 121390720,
+  "locked": 0
+}
+2025-07-20 14:30:41 [INFO] XTM原始数据 - Paid: 41514104995, Unlocked: 121390720, Locked: 0
+2025-07-20 14:30:41 [INFO] Parsed XTM balance - Paid: 41514.104995 XTM, Unlocked: 121.390720 XTM, Locked: 0.000000 XTM, Total: 41635.495715 XTM
+2025-07-20 14:30:41 [INFO] XTM data processing completed successfully
+2025-07-20 14:30:42 [INFO] Sending alert to WeChat...
+2025-07-20 14:30:42 [INFO] WeChat alert sent successfully
+2025-07-20 14:30:42 [INFO] Mining balance monitor completed successfully
