@@ -7,6 +7,7 @@
 ### 🎯 主要功能
 
 - **双币种监控**: 同时监控 XMR (Monero) 和 XTM (Tari) 挖矿收益
+- **多池支持**: XTM 支持多个矿池 (LuckyPool + SupportXMR)
 - **实时价格获取**: 从 XT 交易所获取最新币价
 - **USD 价值计算**: 自动计算挖矿收益的美元价值
 - **增长跟踪**: 记录和显示收益增长情况
@@ -110,6 +111,9 @@ XMR_BALANCE_HISTORY_PATH="/root/MINING/xmr_balance_history.txt"
 
 # XTM 余额历史文件路径 (可选)
 XTM_BALANCE_HISTORY_PATH="/root/MINING/xtm_balance_history.txt"
+
+# XTM 矿池选择 (可选): LUCKYPOOL, SUPPORTXMR, BOTH
+XTM_POOL="BOTH"
 ```
 
 ### 2. 环境变量方式
@@ -120,9 +124,34 @@ export WECHAT_WEBHOOK_URL="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=
 export LOG_FILE_PATH="/your/custom/path/mining.log"
 export XMR_BALANCE_HISTORY_PATH="/your/custom/path/xmr_history.txt"
 export XTM_BALANCE_HISTORY_PATH="/your/custom/path/xtm_history.txt"
+export XTM_POOL="BOTH"  # 选择XTM矿池: LUCKYPOOL, SUPPORTXMR, BOTH
 ```
 
-### 3. 获取微信机器人 Webhook URL
+### 3. XTM 多池配置
+
+脚本支持同时监控多个 XTM 矿池，您可以选择以下配置：
+
+```bash
+# 方式1: 同时监控两个池 (推荐)
+XTM_POOL="BOTH"
+
+# 方式2: 仅监控 LuckyPool
+XTM_POOL="LUCKYPOOL"
+
+# 方式3: 仅监控 SupportXMR
+XTM_POOL="SUPPORTXMR"
+```
+
+**支持的矿池:**
+- **LuckyPool**: api-tari.luckypool.io (3层余额: 已付款/未锁定/已锁定)
+- **SupportXMR**: www.supportxmr.com/api/tari/balance (2层余额: 已支付/待支付)
+
+**输出格式差异:**
+- `BOTH`: 显示两个池的详细信息 + 总合计
+- `LUCKYPOOL`: 仅显示 LuckyPool 的 3 层余额
+- `SUPPORTXMR`: 仅显示 SupportXMR 的 2 层余额
+
+### 4. 获取微信机器人 Webhook URL
 
 1. 打开企业微信，进入需要接收通知的群聊
 2. 点击群聊右上角的 "..." 
@@ -159,13 +188,20 @@ chmod +x mining_balance_monitor.sh
 ### 2. 使用环境变量运行
 
 ```bash
-# 单次运行
+# 单次运行 (默认监控两个XTM池)
 WECHAT_WEBHOOK_URL="your_webhook_url" ./mining_balance_monitor.sh
+
+# 仅监控 SupportXMR XTM 池
+XTM_POOL="SUPPORTXMR" WECHAT_WEBHOOK_URL="your_webhook_url" ./mining_balance_monitor.sh
+
+# 仅监控 LuckyPool XTM 池
+XTM_POOL="LUCKYPOOL" WECHAT_WEBHOOK_URL="your_webhook_url" ./mining_balance_monitor.sh
 
 # 使用自定义路径
 LOG_FILE_PATH="/tmp/mining.log" \
 XMR_BALANCE_HISTORY_PATH="/tmp/xmr_history.txt" \
 XTM_BALANCE_HISTORY_PATH="/tmp/xtm_history.txt" \
+XTM_POOL="BOTH" \
 WECHAT_WEBHOOK_URL="your_webhook_url" \
 ./mining_balance_monitor.sh
 ```

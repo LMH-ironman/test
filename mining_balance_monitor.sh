@@ -11,6 +11,7 @@ _SAVED_LOG_FILE_PATH="${LOG_FILE_PATH:-}"
 _SAVED_XMR_BALANCE_HISTORY_PATH="${XMR_BALANCE_HISTORY_PATH:-}"
 _SAVED_XTM_BALANCE_HISTORY_PATH="${XTM_BALANCE_HISTORY_PATH:-}"
 _SAVED_WECHAT_WEBHOOK_URL="${WECHAT_WEBHOOK_URL:-}"
+_SAVED_XTM_POOL="${XTM_POOL:-}"
 
 # Load configuration from file if exists
 CONFIG_FILE="$(dirname "$0")/mining_config.env"
@@ -24,11 +25,19 @@ fi
 [[ -n "$_SAVED_XMR_BALANCE_HISTORY_PATH" ]] && XMR_BALANCE_HISTORY_PATH="$_SAVED_XMR_BALANCE_HISTORY_PATH"
 [[ -n "$_SAVED_XTM_BALANCE_HISTORY_PATH" ]] && XTM_BALANCE_HISTORY_PATH="$_SAVED_XTM_BALANCE_HISTORY_PATH"
 [[ -n "$_SAVED_WECHAT_WEBHOOK_URL" ]] && WECHAT_WEBHOOK_URL="$_SAVED_WECHAT_WEBHOOK_URL"
+[[ -n "$_SAVED_XTM_POOL" ]] && XTM_POOL="$_SAVED_XTM_POOL"
 
 # Configuration
 readonly XMR_API_URL="https://www.supportxmr.com/api/miner/45GkAa8FmTMWjeM1jCnH1r8psZWMBCi3vdmdrPqPCdDHRS4RZqb2Tnc55BqkUmuhd9KwvvhcoAVRqZMJVWe6wT3V32ZbN5W/stats"
-readonly XTM_WALLET_ADDRESS="16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY"
-readonly XTM_API_URL="https://api-tari.luckypool.io/stats_address?address=${XTM_WALLET_ADDRESS}"
+
+# XTM Mining Pool Configurations
+readonly XTM_LUCKYPOOL_WALLET_ADDRESS="16meX2eiPWFAAU94fRF8u2DejfpQaV21a8bqYQviMDaSKfwuCgQJNAEauk9PTnx3jmKkTVuLXrgcbmXtAvtVUvn6K3BpkDjZeVnSuv1qMKY"
+readonly XTM_LUCKYPOOL_API_URL="https://api-tari.luckypool.io/stats_address?address=${XTM_LUCKYPOOL_WALLET_ADDRESS}"
+readonly XTM_SUPPORTXMR_WALLET_ADDRESS="47jSCEJCzjWVmxJiD4HvjY3dtDqaUjGxv9hKSJ2Lxce8RofZkLioFXpbbX9mfFRv5nev4gbVNCGzkP9UUH1shxCAEBUXsmr"
+readonly XTM_SUPPORTXMR_API_URL="https://www.supportxmr.com/api/tari/balance/${XTM_SUPPORTXMR_WALLET_ADDRESS}"
+
+# XTM Pool selection (LUCKYPOOL or SUPPORTXMR) - can be overridden by environment variable
+readonly XTM_POOL="${XTM_POOL:-BOTH}"
 
 # Price API URLs
 readonly XMR_PRICE_API_URL="https://www.xt.com/sapi/v4/market/public/ticker/24h?symbol=xmr_usdt"
@@ -54,9 +63,16 @@ export XMR_TOTAL_BALANCE=""
 export XMR_BALANCE_GROWTH=""
 export XMR_GROWTH_INT=""
 
-export XTM_PAID_BALANCE=""
-export XTM_UNLOCKED_BALANCE=""
-export XTM_LOCKED_BALANCE=""
+# XTM balance variables for multiple pools
+export XTM_LUCKYPOOL_PAID_BALANCE=""
+export XTM_LUCKYPOOL_UNLOCKED_BALANCE=""
+export XTM_LUCKYPOOL_LOCKED_BALANCE=""
+export XTM_LUCKYPOOL_TOTAL_BALANCE=""
+
+export XTM_SUPPORTXMR_PAID_BALANCE=""
+export XTM_SUPPORTXMR_PENDING_BALANCE=""
+export XTM_SUPPORTXMR_TOTAL_BALANCE=""
+
 export XTM_TOTAL_BALANCE=""
 export XTM_BALANCE_GROWTH=""
 
@@ -143,25 +159,25 @@ fetch_xmr_balance_data() {
     echo "$response"
 }
 
-# Fetch XTM balance data from API
-fetch_xtm_balance_data() {
-    log_message "INFO" "Fetching XTM mining stats from API..."
+# Fetch XTM balance data from LuckyPool API
+fetch_xtm_luckypool_balance_data() {
+    log_message "INFO" "Fetching XTM mining stats from LuckyPool API..."
 
     local response
-    response=$(curl -s --connect-timeout 15 --max-time 45 "$XTM_API_URL" 2>/dev/null) || {
-        log_message "ERROR" "Failed to fetch XTM data from API"
+    response=$(curl -s --connect-timeout 15 --max-time 45 "$XTM_LUCKYPOOL_API_URL" 2>/dev/null) || {
+        log_message "ERROR" "Failed to fetch XTM data from LuckyPool API"
         return 1
     }
 
     # Check if response is empty
     if [[ -z "$response" ]]; then
-        log_message "WARN" "Empty response from XTM API"
+        log_message "WARN" "Empty response from LuckyPool XTM API"
         return 1
     fi
 
     # Check if response contains error
     if [[ "$response" == *"error"* ]] || [[ "$response" == *"Error"* ]]; then
-        log_message "ERROR" "XTM API returned error: $response"
+        log_message "ERROR" "LuckyPool XTM API returned error: $response"
         return 1
     fi
 
@@ -169,11 +185,39 @@ fetch_xtm_balance_data() {
     local stats
     stats=$(echo "$response" | jq '.stats' 2>/dev/null)
     if [[ "$stats" == "null" ]] || [[ -z "$stats" ]]; then
-        log_message "ERROR" "Unable to get XTM stats data from response: $response"
+        log_message "ERROR" "Unable to get XTM stats data from LuckyPool response: $response"
         return 1
     fi
 
     echo "$stats"
+}
+
+# Fetch XTM balance data from SupportXMR API
+fetch_xtm_supportxmr_balance_data() {
+    log_message "INFO" "Fetching XTM balance from SupportXMR API..."
+
+    local response
+    response=$(curl -s --connect-timeout 10 --max-time 30 "$XTM_SUPPORTXMR_API_URL" 2>/dev/null) || {
+        log_message "WARN" "SupportXMR XTM API request failed, using default values"
+        echo '{"paid": 0, "pending": 0}'
+        return
+    }
+
+    # Check if response is empty
+    if [[ -z "$response" ]]; then
+        log_message "WARN" "SupportXMR XTM API returned empty data, using default values"
+        echo '{"paid": 0, "pending": 0}'
+        return
+    fi
+
+    # Validate JSON format
+    if ! echo "$response" | jq empty 2>/dev/null; then
+        log_message "WARN" "SupportXMR XTM API returned non-JSON data, using default values"
+        echo '{"paid": 0, "pending": 0}'
+        return
+    fi
+
+    echo "$response"
 }
 
 # Convert XMR raw value to decimal (divide by 1000000000000)
@@ -422,11 +466,11 @@ parse_xmr_balance_data() {
     log_message "INFO" "Parsed XMR balance - Paid: $paid_decimal XMR, Due: $due_decimal XMR, Total: $total_balance XMR"
 }
 
-# Parse XTM balance data and calculate totals
-parse_xtm_balance_data() {
+# Parse XTM LuckyPool balance data and calculate totals
+parse_xtm_luckypool_balance_data() {
     local json_data="$1"
 
-    log_message "DEBUG" "Raw XTM JSON response: $json_data"
+    log_message "DEBUG" "Raw LuckyPool XTM JSON response: $json_data"
 
     # 提取三个关键值 - 使用字符串模式避免数字精度问题
     local paid_raw
@@ -453,11 +497,11 @@ parse_xtm_balance_data() {
         [[ -z "$locked_raw" ]] && locked_raw="0"
     fi
 
-    log_message "INFO" "XTM原始数据 - Paid: $paid_raw, Unlocked: $unlocked_raw, Locked: $locked_raw"
+    log_message "INFO" "LuckyPool XTM原始数据 - Paid: $paid_raw, Unlocked: $unlocked_raw, Locked: $locked_raw"
 
     # 验证数据有效性
     if [[ ! "$paid_raw" =~ ^[0-9]+$ ]] || [[ ! "$unlocked_raw" =~ ^[0-9]+$ ]] || [[ ! "$locked_raw" =~ ^[0-9]+$ ]]; then
-        log_message "ERROR" "XTM数据格式无效"
+        log_message "ERROR" "LuckyPool XTM数据格式无效"
         return 1
     fi
 
@@ -474,7 +518,77 @@ parse_xtm_balance_data() {
     local total_balance
     total_balance=$(echo "scale=6; $paid_decimal + $unlocked_decimal + $locked_decimal" | bc)
 
-    # 获取上次收益
+    # Export values
+    export XTM_LUCKYPOOL_PAID_BALANCE="$paid_decimal"
+    export XTM_LUCKYPOOL_UNLOCKED_BALANCE="$unlocked_decimal"
+    export XTM_LUCKYPOOL_LOCKED_BALANCE="$locked_decimal"
+    export XTM_LUCKYPOOL_TOTAL_BALANCE="$total_balance"
+
+    log_message "INFO" "Parsed LuckyPool XTM balance - Paid: $paid_decimal XTM, Unlocked: $unlocked_decimal XTM, Locked: $locked_decimal XTM, Total: $total_balance XTM"
+}
+
+# Parse XTM SupportXMR balance data using SupportXMR API format
+parse_xtm_supportxmr_balance_data() {
+    local json_data="$1"
+    log_message "DEBUG" "Raw SupportXMR XTM JSON response: $json_data"
+    
+    local paid_raw="" pending_raw=""
+    
+    # Method 1: Use jq for parsing (preferred)
+    if command -v jq &> /dev/null; then
+        paid_raw=$(echo "$json_data" | jq -r '.paid // 0' 2>/dev/null || echo "")
+        pending_raw=$(echo "$json_data" | jq -r '.pending // 0' 2>/dev/null || echo "")
+        log_message "DEBUG" "SupportXMR jq parsing result - paid_raw: $paid_raw, pending_raw: $pending_raw"
+    fi
+    
+    # Method 2: Regex fallback (if jq parsing fails)
+    if [[ -z "$paid_raw" || "$paid_raw" == "null" ]]; then
+        if [[ "$json_data" =~ \"paid\":([0-9]+) ]]; then
+            paid_raw="${BASH_REMATCH[1]}"
+            log_message "DEBUG" "SupportXMR regex parsing paid: $paid_raw"
+        fi
+    fi
+    if [[ -z "$pending_raw" || "$pending_raw" == "null" ]]; then
+        if [[ "$json_data" =~ \"pending\":([0-9]+) ]]; then
+            pending_raw="${BASH_REMATCH[1]}"
+            log_message "DEBUG" "SupportXMR regex parsing pending: $pending_raw"
+        fi
+    fi
+    
+    # Clean and validate values
+    paid_raw=$(echo "$paid_raw" | sed 's/[^0-9]//g' || echo "0")
+    pending_raw=$(echo "$pending_raw" | sed 's/[^0-9]//g' || echo "0")
+    
+    # Set defaults
+    [[ -z "$paid_raw" ]] && paid_raw="0"
+    [[ -z "$pending_raw" ]] && pending_raw="0"
+    
+    log_message "INFO" "SupportXMR XTM parsing result - paid_raw: $paid_raw, pending_raw: $pending_raw"
+    
+    # Convert to readable format (divide by 1000000, keep 6 decimal places)
+    local paid_decimal=$(printf "%d.%06d" "$((paid_raw / 1000000))" "$((paid_raw % 1000000))")
+    local pending_decimal=$(printf "%d.%06d" "$((pending_raw / 1000000))" "$((pending_raw % 1000000))")
+    local total_raw=$((paid_raw + pending_raw))
+    local total_decimal=$(printf "%d.%06d" "$((total_raw / 1000000))" "$((total_raw % 1000000))")
+    
+    # Export values
+    export XTM_SUPPORTXMR_PAID_BALANCE="$paid_decimal"
+    export XTM_SUPPORTXMR_PENDING_BALANCE="$pending_decimal"
+    export XTM_SUPPORTXMR_TOTAL_BALANCE="$total_decimal"
+    
+    log_message "INFO" "Parsed SupportXMR XTM balance - Paid: $paid_decimal XTM, Pending: $pending_decimal XTM, Total: $total_decimal XTM"
+}
+
+# Aggregate XTM balance data from multiple pools and calculate growth
+aggregate_xtm_balance_data() {
+    local luckypool_total="${XTM_LUCKYPOOL_TOTAL_BALANCE:-0.000000}"
+    local supportxmr_total="${XTM_SUPPORTXMR_TOTAL_BALANCE:-0.000000}"
+    
+    # Calculate combined total balance
+    local combined_total
+    combined_total=$(echo "scale=6; $luckypool_total + $supportxmr_total" | bc 2>/dev/null || echo "0.000000")
+    
+    # Get previous total balance for growth calculation
     local history_file="${XTM_BALANCE_HISTORY_PATH:-/root/MINING/xtm_balance_history.txt}"
     local previous_balance="0.000000"
     if [[ -f "$history_file" ]]; then
@@ -482,25 +596,22 @@ parse_xtm_balance_data() {
         [[ -z "$previous_balance" ]] && previous_balance="0.000000"
     fi
 
-    # 计算收益增长
+    # Calculate balance growth
     local balance_growth
-    balance_growth=$(echo "scale=6; $total_balance - $previous_balance" | bc)
+    balance_growth=$(echo "scale=6; $combined_total - $previous_balance" | bc 2>/dev/null || echo "0.000000")
 
-    # Save current balance to history
+    # Save current combined balance to history
     mkdir -p "$(dirname "$history_file")" 2>/dev/null || true
-    echo "$(date '+%Y-%m-%d %H:%M:%S') $total_balance" >> "$history_file" 2>/dev/null || true
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $combined_total" >> "$history_file" 2>/dev/null || true
     if [[ -f "$history_file" ]]; then
         tail -n 100 "$history_file" > "${history_file}.tmp" 2>/dev/null && mv "${history_file}.tmp" "$history_file" 2>/dev/null || true
     fi
 
-    # Export values
-    export XTM_PAID_BALANCE="$paid_decimal"
-    export XTM_UNLOCKED_BALANCE="$unlocked_decimal"
-    export XTM_LOCKED_BALANCE="$locked_decimal"
-    export XTM_TOTAL_BALANCE="$total_balance"
+    # Export combined values
+    export XTM_TOTAL_BALANCE="$combined_total"
     export XTM_BALANCE_GROWTH="$balance_growth"
 
-    log_message "INFO" "Parsed XTM balance - Paid: $paid_decimal XTM, Unlocked: $unlocked_decimal XTM, Locked: $locked_decimal XTM, Total: $total_balance XTM"
+    log_message "INFO" "Combined XTM balance - LuckyPool: $luckypool_total XTM, SupportXMR: $supportxmr_total XTM, Total: $combined_total XTM, Growth: $balance_growth XTM"
 }
 
 # Format balance for display (remove trailing zeros)
@@ -540,23 +651,50 @@ generate_alert_message() {
         xmr_growth_formatted="数据获取失败"
     fi
 
-    # Format XTM balances
-    local xtm_paid_formatted
-    local xtm_unlocked_formatted
-    local xtm_locked_formatted
+    # Format XTM balances for multiple pools
     local xtm_total_formatted
     local xtm_growth_formatted
+    
+    # LuckyPool XTM balances
+    local xtm_lucky_paid_formatted
+    local xtm_lucky_unlocked_formatted
+    local xtm_lucky_locked_formatted
+    local xtm_lucky_total_formatted
+    
+    # SupportXMR XTM balances
+    local xtm_support_paid_formatted
+    local xtm_support_pending_formatted
+    local xtm_support_total_formatted
 
-    if [[ -n "$XTM_PAID_BALANCE" ]]; then
-        xtm_paid_formatted=$(format_balance "$XTM_PAID_BALANCE")
-        xtm_unlocked_formatted=$(format_balance "$XTM_UNLOCKED_BALANCE")
-        xtm_locked_formatted=$(format_balance "$XTM_LOCKED_BALANCE")
+    # Format LuckyPool balances
+    if [[ -n "$XTM_LUCKYPOOL_TOTAL_BALANCE" ]]; then
+        xtm_lucky_paid_formatted=$(format_balance "$XTM_LUCKYPOOL_PAID_BALANCE")
+        xtm_lucky_unlocked_formatted=$(format_balance "$XTM_LUCKYPOOL_UNLOCKED_BALANCE")
+        xtm_lucky_locked_formatted=$(format_balance "$XTM_LUCKYPOOL_LOCKED_BALANCE")
+        xtm_lucky_total_formatted=$(format_balance "$XTM_LUCKYPOOL_TOTAL_BALANCE")
+    else
+        xtm_lucky_paid_formatted="数据获取失败"
+        xtm_lucky_unlocked_formatted="数据获取失败"
+        xtm_lucky_locked_formatted="数据获取失败"
+        xtm_lucky_total_formatted="数据获取失败"
+    fi
+    
+    # Format SupportXMR balances
+    if [[ -n "$XTM_SUPPORTXMR_TOTAL_BALANCE" ]]; then
+        xtm_support_paid_formatted=$(format_balance "$XTM_SUPPORTXMR_PAID_BALANCE")
+        xtm_support_pending_formatted=$(format_balance "$XTM_SUPPORTXMR_PENDING_BALANCE")
+        xtm_support_total_formatted=$(format_balance "$XTM_SUPPORTXMR_TOTAL_BALANCE")
+    else
+        xtm_support_paid_formatted="数据获取失败"
+        xtm_support_pending_formatted="数据获取失败"
+        xtm_support_total_formatted="数据获取失败"
+    fi
+    
+    # Format combined XTM totals
+    if [[ -n "$XTM_TOTAL_BALANCE" ]]; then
         xtm_total_formatted=$(format_balance "$XTM_TOTAL_BALANCE")
         xtm_growth_formatted=$(format_balance "$XTM_BALANCE_GROWTH")
     else
-        xtm_paid_formatted="数据获取失败"
-        xtm_unlocked_formatted="数据获取失败"
-        xtm_locked_formatted="数据获取失败"
         xtm_total_formatted="数据获取失败"
         xtm_growth_formatted="数据获取失败"
     fi
@@ -662,10 +800,19 @@ generate_alert_message() {
 💲 总价值：${xmr_value_formatted} USD
 
 🔶 XTM 收益详情：
-💰 已付款：${xtm_paid_formatted} XTM
-🔓 未锁定：${xtm_unlocked_formatted} XTM
-🔒 已锁定：${xtm_locked_formatted} XTM
-💎 总收益：${xtm_total_formatted} XTM
+
+🎯 LuckyPool 矿池：
+💰 已付款：${xtm_lucky_paid_formatted} XTM
+🔓 未锁定：${xtm_lucky_unlocked_formatted} XTM
+🔒 已锁定：${xtm_lucky_locked_formatted} XTM
+💎 小计：${xtm_lucky_total_formatted} XTM
+
+🎯 SupportXMR 矿池：
+💰 已支付：${xtm_support_paid_formatted} XTM
+⏳ 待支付：${xtm_support_pending_formatted} XTM
+💎 小计：${xtm_support_total_formatted} XTM
+
+💎 XTM 总收益：${xtm_total_formatted} XTM
 📈 收益增长：${xtm_growth_indicator}${xtm_growth_formatted} XTM
 💵 当前价格：${xtm_price_formatted} USDT
 💲 总价值：${xtm_value_formatted} USD
@@ -758,17 +905,44 @@ main() {
         log_message "ERROR" "XMR data processing failed"
     fi
 
-    # Fetch and parse XTM balance data
-    local xtm_balance_data
-    if xtm_balance_data=$(fetch_xtm_balance_data); then
-        if parse_xtm_balance_data "$xtm_balance_data"; then
-            xtm_success=true
-            log_message "INFO" "XTM data processing completed successfully"
+    # Fetch and parse XTM balance data from multiple pools
+    local xtm_luckypool_success=false
+    local xtm_supportxmr_success=false
+    
+    # Process LuckyPool XTM data if enabled
+    if [[ "$XTM_POOL" == "LUCKYPOOL" || "$XTM_POOL" == "BOTH" ]]; then
+        local xtm_luckypool_data
+        if xtm_luckypool_data=$(fetch_xtm_luckypool_balance_data); then
+            if parse_xtm_luckypool_balance_data "$xtm_luckypool_data"; then
+                xtm_luckypool_success=true
+                log_message "INFO" "LuckyPool XTM data processing completed successfully"
+            else
+                log_message "ERROR" "LuckyPool XTM data processing failed"
+            fi
         else
-            log_message "ERROR" "XTM data processing failed"
+            log_message "ERROR" "LuckyPool XTM data fetching failed"
         fi
+    fi
+    
+    # Process SupportXMR XTM data if enabled
+    if [[ "$XTM_POOL" == "SUPPORTXMR" || "$XTM_POOL" == "BOTH" ]]; then
+        local xtm_supportxmr_data
+        xtm_supportxmr_data=$(fetch_xtm_supportxmr_balance_data)
+        if parse_xtm_supportxmr_balance_data "$xtm_supportxmr_data"; then
+            xtm_supportxmr_success=true
+            log_message "INFO" "SupportXMR XTM data processing completed successfully"
+        else
+            log_message "ERROR" "SupportXMR XTM data processing failed"
+        fi
+    fi
+    
+    # Aggregate XTM data if at least one pool succeeded
+    if [[ "$xtm_luckypool_success" == true ]] || [[ "$xtm_supportxmr_success" == true ]]; then
+        aggregate_xtm_balance_data
+        xtm_success=true
+        log_message "INFO" "XTM aggregation completed successfully"
     else
-        log_message "ERROR" "XTM data fetching failed"
+        log_message "ERROR" "All XTM pool data processing failed"
     fi
 
     # Fetch price data from XT exchange
@@ -816,7 +990,7 @@ usage() {
     cat << EOF
 Usage: $0 [OPTIONS]
 
-Mining Balance Monitor Script (XMR + XTM)
+Mining Balance Monitor Script (XMR + XTM Multi-Pool)
 
 Options:
     -h, --help      Show this help message
@@ -824,16 +998,30 @@ Options:
 
 Environment Variables:
     WECHAT_WEBHOOK_URL    WeChat webhook URL for sending alerts
+    XTM_POOL              XTM pool selection (LUCKYPOOL, SUPPORTXMR, BOTH) [default: BOTH]
+    LOG_FILE_PATH         Log file path [default: /root/MINING/mining_balance_monitor.log]
+    XMR_BALANCE_HISTORY_PATH    XMR balance history file path
+    XTM_BALANCE_HISTORY_PATH    XTM balance history file path
 
 Examples:
-    # Run with console output only
+    # Run with console output only (both XTM pools)
     $0
 
-    # Run with WeChat alerts
+    # Run with WeChat alerts and both XTM pools
     WECHAT_WEBHOOK_URL="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=your-key" $0
+
+    # Run with only SupportXMR XTM pool
+    XTM_POOL="SUPPORTXMR" $0
+
+    # Run with only LuckyPool XTM pool
+    XTM_POOL="LUCKYPOOL" $0
 
     # Run as cron job (every 30 minutes)
     */30 * * * * /path/to/mining_balance_monitor.sh >> /var/log/cron.log 2>&1
+
+Supported XTM Pools:
+    - LuckyPool: api-tari.luckypool.io
+    - SupportXMR: www.supportxmr.com/api/tari/balance
 EOF
 }
 
@@ -845,7 +1033,7 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         -v|--version)
-            echo "Mining Balance Monitor v2.1.0"
+            echo "Mining Balance Monitor v2.2.0 (Multi-Pool Support)"
             exit 0
             ;;
         *)
