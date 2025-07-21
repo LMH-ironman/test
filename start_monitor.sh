@@ -17,8 +17,12 @@ if [[ $EUID -eq 0 ]]; then
     echo "📊 开始监控..."
     echo "================================"
     
-    # 运行监控脚本
-    "$(dirname "$0")/mining_balance_monitor.sh"
+    # 以 5 分钟间隔循环运行监控脚本
+    while true; do
+        "$(dirname "$0")/mining_balance_monitor.sh"
+        echo "🔄 下一次监控将在 5 分钟后运行..."
+        sleep 300
+    done
     
 else
     echo "⚠️  检测到非 root 用户，使用临时目录..."
@@ -31,11 +35,15 @@ else
     echo "📊 开始监控..."
     echo "================================"
     
-    # 使用环境变量覆盖路径
-    LOG_FILE_PATH="$USER_DIR/mining.log" \
-    XMR_BALANCE_HISTORY_PATH="$USER_DIR/xmr_history.txt" \
-    XTM_BALANCE_HISTORY_PATH="$USER_DIR/xtm_history.txt" \
-    "$(dirname "$0")/mining_balance_monitor.sh"
+    # 以 5 分钟间隔循环运行监控脚本（非 root 用户）
+    while true; do
+        LOG_FILE_PATH="$USER_DIR/mining.log" \
+        XMR_BALANCE_HISTORY_PATH="$USER_DIR/xmr_history.txt" \
+        XTM_BALANCE_HISTORY_PATH="$USER_DIR/xtm_history.txt" \
+        "$(dirname "$0")/mining_balance_monitor.sh"
+        echo "🔄 下一次监控将在 5 分钟后运行..."
+        sleep 300
+    done
 fi
 
 echo "================================"
